@@ -6,7 +6,8 @@ import {
   signOut,
   onAuthStateChanged,
   User,
-  signInWithPopup
+  signInWithPopup,
+  updateProfile
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
@@ -44,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: serverTimestamp(),
       });
       
-      // Update user display name
-      await userCredential.user.updateProfile({
+      // Update user display name using the imported updateProfile function
+      await updateProfile(userCredential.user, {
         displayName: username
       });
     } catch (error) {
@@ -88,9 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authProvider: 'google'
         });
         
-        // Update user display name if not set
+        // Update user display name if not set, using the imported updateProfile function
         if (!user.displayName) {
-          await user.updateProfile({
+          await updateProfile(user, {
             displayName: username
           });
         }
