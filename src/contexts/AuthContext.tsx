@@ -5,16 +5,18 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  signInWithPopup
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db, googleProvider } from "@/lib/firebase";
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   signup: (email: string, password: string, username: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -39,7 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, "users", userCredential.user.uid), {
         username,
         email,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
+      });
+      
+      // Update user display name
+      await userCredential.user.updateProfile({
+        displayName: username
       });
     } catch (error) {
       throw error;
@@ -47,9 +54,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function login(email: string, password: string): Promise<void> {
-    // Changed return type to Promise<void> to match the interface
     try {
       await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+  async function loginWithGoogle(): Promise<void> {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if this is a new user
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      
+      if (!userDoc.exists()) {
+        // Generate a username from their display name or email
+        let username = user.displayName ? 
+          user.displayName.toLowerCase().replace(/\s+/g, '_') : 
+          user.email?.split('@')[0] || '';
+          
+        // Add random numbers if username is less than 3 characters
+        if (username.length < 3) {
+          username += Math.floor(1000 + Math.random() * 9000);
+        }
+        
+        // Store user data in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          username,
+          email: user.email,
+          createdAt: serverTimestamp(),
+          authProvider: 'google'
+        });
+        
+        // Update user display name if not set
+        if (!user.displayName) {
+          await user.updateProfile({
+            displayName: username
+          });
+        }
+      }
     } catch (error) {
       throw error;
     }
@@ -73,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signup,
     login,
+    loginWithGoogle,
     logout,
   };
 
