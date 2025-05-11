@@ -2,17 +2,19 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getAnalytics } from "firebase/analytics";
 
-// Replace with your own Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-app.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-app.appspot.com",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyDlEACfKbqIbdhPRsXaKfL4cZ3e6ZzqmUQ",
+  authDomain: "whispr-d376f.firebaseapp.com",
+  projectId: "whispr-d376f",
+  storageBucket: "whispr-d376f.firebasestorage.app",
+  messagingSenderId: "728189677744",
+  appId: "1:728189677744:web:61747879b0fa10554ccb75",
+  measurementId: "G-YFM3T6K7DJ"
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const analytics = getAnalytics(app);

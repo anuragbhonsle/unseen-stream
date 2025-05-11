@@ -16,7 +16,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262 83.3% 57.8%;
+    /* Instagram-like gradient pink to orange */
+    --primary: 336 100% 50%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -25,7 +26,8 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 262 83.3% 57.8%;
+    /* Instagram accent color (orangey) */
+    --accent: 35 100% 50%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,7 +35,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 83.3% 57.8%;
+    --ring: 336 100% 50%;
 
     --radius: 1rem;
   }
@@ -48,7 +50,8 @@
     --popover: 240 10% 5%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 83.3% 57.8%;
+    /* Instagram-like gradient pink to orange */
+    --primary: 336 100% 50%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 240 5% 12%;
@@ -57,7 +60,8 @@
     --muted: 240 5% 12%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 262 83.3% 57.8%;
+    /* Instagram accent color (orangey) */
+    --accent: 35 100% 50%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -65,7 +69,7 @@
 
     --border: 240 5% 14%;
     --input: 240 5% 14%;
-    --ring: 262 83.3% 57.8%;
+    --ring: 336 100% 50%;
   }
 }
 

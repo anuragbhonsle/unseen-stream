@@ -1,22 +1,22 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
-  User, 
   createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  updateProfile 
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User
 } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
-type AuthContextType = {
+interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   signup: (email: string, password: string, username: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -32,21 +32,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function signup(email: string, password: string, username: string) {
+  async function signup(email: string, password: string, username: string): Promise<void> {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: username });
+      // Store additional user data in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        username,
+        email,
+        createdAt: new Date(),
+      });
     } catch (error) {
-      console.error("Error signing up:", error);
       throw error;
     }
   }
 
-  function login(email: string, password: string) {
-    return signInWithEmailAndPassword(auth, email, password);
+  async function login(email: string, password: string): Promise<void> {
+    // Changed return type to Promise<void> to match the interface
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      throw error;
+    }
   }
 
-  function logout() {
+  async function logout(): Promise<void> {
     return signOut(auth);
   }
 
@@ -64,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signup,
     login,
-    logout
+    logout,
   };
 
   return (
