@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,15 +10,25 @@ const DevModal: React.FC<DevModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div 
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
         className="card-glass max-w-md w-full mx-4 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-2xl font-bold mb-4 text-primary">You found the secret. ✨</h3>
+        <h3 className="text-2xl font-bold mb-4 text-primary">
+          You found the secret. ✨
+        </h3>
         <p className="mb-4">You're not just a user, you're curious.</p>
-        <p className="mb-4">I'm Anurag. No mentor, no roadmap. Just faith, fire, and StackOverflow.</p>
-        <p className="mb-4">Thanks for checking out Whispr. Now go build something legendary.</p>
+        <p className="mb-4">
+          I'm Anurag. No mentor, no roadmap. Just faith, fire, and
+          StackOverflow.
+        </p>
+        <p className="mb-4">
+          Thanks for checking out Visper. Now go build something legendary.
+        </p>
       </div>
     </div>
   );
@@ -46,17 +55,23 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Whispr. All rights reserved.
+              © {new Date().getFullYear()} Visper. All rights reserved.
             </p>
           </div>
           <div className="flex space-x-6">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
               Home
             </Link>
-            <Link to="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              to="/about"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
               About
             </Link>
-            <span 
+            <span
               className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
               onClick={handleDeveloperNameClick}
             >

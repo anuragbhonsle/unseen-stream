@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -25,22 +24,31 @@ const Navbar = () => {
     <nav className="w-full py-4 px-6 md:px-16 flex items-center justify-between glass fixed top-0 z-50">
       <Link to="/" className="flex items-center">
         <h1 className="font-bold text-xl text-foreground">
-          <span className="text-primary">Whispr</span>
+          <span className="text-primary">Visper</span>
         </h1>
       </Link>
 
       {/* Desktop Menu */}
       <div className="hidden md:flex items-center space-x-6">
-        <Link to="/" className="text-foreground hover:text-primary transition-colors">
+        <Link
+          to="/"
+          className="text-foreground hover:text-primary transition-colors"
+        >
           Home
         </Link>
-        <Link to="/about" className="text-foreground hover:text-primary transition-colors">
+        <Link
+          to="/about"
+          className="text-foreground hover:text-primary transition-colors"
+        >
           About
         </Link>
-        
+
         {currentUser ? (
           <>
-            <Link to="/inbox" className="text-foreground hover:text-primary transition-colors">
+            <Link
+              to="/inbox"
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Inbox
             </Link>
             <Button
@@ -53,12 +61,15 @@ const Navbar = () => {
           </>
         ) : (
           <Link to="/auth">
-            <Button variant="default" className="bg-primary hover:bg-primary/80 transition-colors">
+            <Button
+              variant="default"
+              className="bg-primary hover:bg-primary/80 transition-colors"
+            >
               Sign In
             </Button>
           </Link>
         )}
-        
+
         <button
           onClick={toggleTheme}
           className="p-2 rounded-full hover:bg-secondary transition-colors"
@@ -79,25 +90,25 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 w-full p-5 glass md:hidden flex flex-col space-y-4 mt-2 rounded-b-2xl animate-fade-in">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-foreground hover:text-primary transition-colors"
             onClick={() => setIsMenuOpen(false)}
           >
             Home
           </Link>
-          <Link 
-            to="/about" 
+          <Link
+            to="/about"
             className="text-foreground hover:text-primary transition-colors"
             onClick={() => setIsMenuOpen(false)}
           >
             About
           </Link>
-          
+
           {currentUser ? (
             <>
-              <Link 
-                to="/inbox" 
+              <Link
+                to="/inbox"
                 className="text-foreground hover:text-primary transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -114,16 +125,16 @@ const Navbar = () => {
               </button>
             </>
           ) : (
-            <Link 
-              to="/auth"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Button variant="default" className="bg-primary hover:bg-primary/80 w-full transition-colors">
+            <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+              <Button
+                variant="default"
+                className="bg-primary hover:bg-primary/80 w-full transition-colors"
+              >
                 Sign In
               </Button>
             </Link>
           )}
-          
+
           <div className="flex items-center">
             <button
               onClick={toggleTheme}
