@@ -1,17 +1,20 @@
 
-import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Search } from 'lucide-react';
 
 const Index = () => {
   const { currentUser } = useAuth();
+  const [searchUsername, setSearchUsername] = useState('');
   const typingTextRef = useRef<HTMLParagraphElement>(null);
   const howItWorksRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const text = "Share your thoughts into the void...";
+    const text = "Anonymous messages. Zero judgment.";
     if (typingTextRef.current) {
       typingTextRef.current.textContent = "";
       
@@ -31,6 +34,13 @@ const Index = () => {
   const scrollToHowItWorks = () => {
     howItWorksRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchUsername.trim()) {
+      navigate(`/${searchUsername.trim()}`);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -38,32 +48,53 @@ const Index = () => {
       <section className="flex-1 flex flex-col items-center justify-center px-4 pt-20 pb-20 min-h-[90vh] relative">
         <div className="max-w-3xl w-full text-center space-y-8 z-10">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
-            Anonymous Messages.
-            <br />
-            <span className="text-primary">Zero Judgment.</span>
+            Send Anonymous Messages
           </h1>
           
           <div className="typing-container">
             <p ref={typingTextRef} className="text-xl md:text-2xl text-muted-foreground pb-2"></p>
           </div>
+          
+          <div className="max-w-md mx-auto w-full bg-transparent mt-6">
+            <form onSubmit={handleSearch} className="flex flex-col gap-4">
+              <div className="relative">
+                <Input 
+                  placeholder="Enter a username..."
+                  className="glass pr-10 py-6 text-lg"
+                  value={searchUsername}
+                  onChange={(e) => setSearchUsername(e.target.value)}
+                />
+                <Button 
+                  type="submit" 
+                  variant="ghost" 
+                  className="absolute right-0 top-0 h-full px-3"
+                  disabled={!searchUsername.trim()}
+                >
+                  <Search size={20} />
+                </Button>
+              </div>
+              <Button 
+                type="submit"
+                className="bg-primary hover:bg-primary/80 py-6 text-lg"
+                disabled={!searchUsername.trim()}
+              >
+                Send Anonymous Message
+              </Button>
+            </form>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
             {currentUser ? (
               <Link to="/inbox">
-                <Button className="bg-primary hover:bg-primary/80 transition-colors">
-                  Go to My Inbox
+                <Button variant="outline" className="px-6">
+                  View My Inbox
                 </Button>
               </Link>
             ) : (
               <>
                 <Link to="/auth">
-                  <Button className="bg-primary hover:bg-primary/80 transition-colors w-full sm:w-auto">
-                    Get Started
-                  </Button>
-                </Link>
-                <Link to="/auth?mode=login">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    Sign In
+                  <Button variant="outline" className="w-full sm:w-auto px-6">
+                    Create Account
                   </Button>
                 </Link>
               </>
@@ -72,7 +103,7 @@ const Index = () => {
           
           <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce">
             <button onClick={scrollToHowItWorks} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-              <span>Learn More</span>
+              <span>How it works</span>
               <ArrowDown size={20} />
             </button>
           </div>
@@ -84,55 +115,46 @@ const Index = () => {
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How Whispr Works</h2>
 
-          <div className="card-glass max-w-4xl mx-auto">
-            <div className="mb-10 text-center">
-              <p className="text-lg text-muted-foreground">
-                Get a personal link that lets anyone send you anonymous messages.
-                You'll see them in your private inbox.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <span className="text-primary font-bold text-xl">1</span>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Create Account</h3>
+              <p className="text-muted-foreground">Sign up to receive messages and get your unique username</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-primary font-bold text-xl">1</span>
-                </div>
-                <h3 className="text-xl font-medium mb-2">Create Account</h3>
-                <p className="text-muted-foreground">Sign up in seconds and get your unique Whispr link</p>
+            <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <span className="text-primary font-bold text-xl">2</span>
               </div>
-              
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-primary font-bold text-xl">2</span>
-                </div>
-                <h3 className="text-xl font-medium mb-2">Share Your Link</h3>
-                <p className="text-muted-foreground">Send it to friends or post on your social media profiles</p>
-              </div>
-              
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-primary font-bold text-xl">3</span>
-                </div>
-                <h3 className="text-xl font-medium mb-2">Receive Messages</h3>
-                <p className="text-muted-foreground">Check your private inbox for anonymous messages</p>
-              </div>
+              <h3 className="text-xl font-medium mb-2">Share Your Username</h3>
+              <p className="text-muted-foreground">Tell friends your Whispr username so they can message you</p>
             </div>
             
-            <div className="flex flex-col items-center">
-              {currentUser ? (
-                <Link to="/inbox">
-                  <Button className="bg-primary hover:bg-primary/80 transition-colors">
-                    View My Inbox
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/auth">
-                  <Button className="bg-primary hover:bg-primary/80 transition-colors">
-                    Create Your Account
-                  </Button>
-                </Link>
-              )}
+            <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <span className="text-primary font-bold text-xl">3</span>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Receive Messages</h3>
+              <p className="text-muted-foreground">Check your private inbox for anonymous messages from anyone</p>
             </div>
+          </div>
+          
+          <div className="flex flex-col items-center mt-10">
+            {currentUser ? (
+              <Link to="/inbox">
+                <Button className="bg-primary hover:bg-primary/80 transition-colors px-8 py-6 text-lg">
+                  View My Inbox
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-primary hover:bg-primary/80 transition-colors px-8 py-6 text-lg">
+                  Create Your Account
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -156,7 +178,7 @@ const Index = () => {
               <>
                 <Link to="/auth">
                   <Button className="bg-primary hover:bg-primary/80 transition-colors w-full sm:w-auto px-8">
-                    Get My Whispr Link
+                    Get My Whispr Username
                   </Button>
                 </Link>
                 <Link to="/about">

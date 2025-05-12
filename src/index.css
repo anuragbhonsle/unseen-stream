@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,69 +7,69 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 230 25% 98%;
+    --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 240 10% 3.9%;
 
-    /* Instagram-like gradient pink to orange */
-    --primary: 336 100% 50%;
-    --primary-foreground: 210 40% 98%;
+    /* Custom pink/purple gradient */
+    --primary: 325 90% 60%;
+    --primary-foreground: 355 100% 97.5%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    /* Instagram accent color (orangey) */
-    --accent: 35 100% 50%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Custom accent color */
+    --accent: 262 83% 58%;
+    --accent-foreground: 355 100% 97.5%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 355 100% 97.5%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 336 100% 50%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 325 90% 60%;
 
     --radius: 1rem;
   }
 
   .dark {
-    --background: 240 10% 5%;
-    --foreground: 210 40% 98%;
+    --background: 240 12% 5%;
+    --foreground: 355 100% 97.5%;
 
     --card: 240 10% 10%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 355 100% 97.5%;
 
-    --popover: 240 10% 5%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 355 100% 97.5%;
 
-    /* Instagram-like gradient pink to orange */
-    --primary: 336 100% 50%;
-    --primary-foreground: 210 40% 98%;
+    /* Custom pink/purple gradient */
+    --primary: 325 90% 60%;
+    --primary-foreground: 355 100% 97.5%;
 
-    --secondary: 240 5% 12%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 6% 10%;
+    --secondary-foreground: 355 100% 97.5%;
 
-    --muted: 240 5% 12%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 6% 15%;
+    --muted-foreground: 240 5% 64.9%;
 
-    /* Instagram accent color (orangey) */
-    --accent: 35 100% 50%;
-    --accent-foreground: 210 40% 98%;
+    /* Custom accent color */
+    --accent: 262 83% 58%;
+    --accent-foreground: 355 100% 97.5%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 355 100% 97.5%;
 
-    --border: 240 5% 14%;
-    --input: 240 5% 14%;
-    --ring: 336 100% 50%;
+    --border: 240 6% 15%;
+    --input: 240 6% 15%;
+    --ring: 325 90% 60%;
   }
 }
 
@@ -81,6 +81,13 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Outfit', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -94,10 +101,62 @@
   }
   
   .typing-container {
-    @apply overflow-hidden whitespace-nowrap;
+    @apply overflow-hidden;
   }
   
   .typing-text {
     @apply overflow-hidden border-r-4 border-primary inline-block whitespace-nowrap animate-typing;
   }
+  
+  /* Custom button styles */
+  .btn-custom {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  
+  .btn-custom::before {
+    @apply content-[''] absolute top-0 left-0 w-full h-full bg-white/10 transform scale-x-0 origin-left transition-transform duration-300;
+  }
+  
+  .btn-custom:hover::before {
+    @apply transform scale-x-100;
+  }
+}
+
+/* Custom gradient backgrounds */
+.bg-gradient-1 {
+  background: linear-gradient(135deg, hsl(325, 90%, 60%), hsl(262, 83%, 58%));
+}
+
+.bg-gradient-2 {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(15px);
+}
+
+/* Custom animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Custom scroll bars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary), 0.3);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
 }

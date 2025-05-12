@@ -17,8 +17,9 @@ interface AuthContextType {
   loading: boolean;
   signup: (email: string, password: string, username: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (customUsername?: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUsername: (username: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signup(email: string, password: string, username: string): Promise<void> {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
       // Store additional user data in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), {
         username,
@@ -45,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: serverTimestamp(),
       });
       
-      // Update user display name using the imported updateProfile function
+      // Update user display name
       await updateProfile(userCredential.user, {
         displayName: username
       });
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
   
-  async function loginWithGoogle(): Promise<void> {
+  async function loginWithGoogle(customUsername?: string): Promise<void> {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -70,9 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if this is a new user
       const userDoc = await getDoc(doc(db, "users", user.uid));
       
-      if (!userDoc.exists()) {
-        // Generate a username from their display name or email
-        let username = user.displayName ? 
+      let username = customUsername;
+      
+      // If no custom username was provided, generate one from display name or email
+      if (!username) {
+        username = user.displayName ? 
           user.displayName.toLowerCase().replace(/\s+/g, '_') : 
           user.email?.split('@')[0] || '';
           
@@ -80,22 +84,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (username.length < 3) {
           username += Math.floor(1000 + Math.random() * 9000);
         }
-        
-        // Store user data in Firestore
-        await setDoc(doc(db, "users", user.uid), {
-          username,
-          email: user.email,
-          createdAt: serverTimestamp(),
-          authProvider: 'google'
-        });
-        
-        // Update user display name if not set, using the imported updateProfile function
-        if (!user.displayName) {
-          await updateProfile(user, {
-            displayName: username
-          });
-        }
       }
+      
+      // Store user data in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        username,
+        email: user.email,
+        createdAt: serverTimestamp(),
+        authProvider: 'google'
+      }, { merge: true });
+      
+      // Update user display name
+      await updateProfile(user, {
+        displayName: username
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function updateUsername(username: string): Promise<void> {
+    if (!currentUser) throw new Error("No user logged in");
+    
+    try {
+      // Update in Firebase Auth
+      await updateProfile(currentUser, {
+        displayName: username
+      });
+      
+      // Update in Firestore
+      await setDoc(doc(db, "users", currentUser.uid), {
+        username
+      }, { merge: true });
     } catch (error) {
       throw error;
     }
@@ -121,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     loginWithGoogle,
     logout,
+    updateUsername
   };
 
   return (

@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
 
 const SendMessage = () => {
   const { username } = useParams<{ username: string }>();
@@ -13,27 +15,40 @@ const SendMessage = () => {
   const [loading, setLoading] = useState(false);
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const [sent, setSent] = useState(false);
+  const [searchUsername, setSearchUsername] = useState(username || "");
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const checkUserExists = async () => {
-      if (!username) {
-        setUserExists(false);
-        return;
-      }
-      
-      try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username));
-        const querySnapshot = await getDocs(q);
-        setUserExists(!querySnapshot.empty);
-      } catch (error) {
-        console.error("Error checking user:", error);
-        setUserExists(false);
-      }
-    };
-    
-    checkUserExists();
+    if (username) {
+      checkUserExists(username);
+    } else {
+      setUserExists(null);
+    }
   }, [username]);
+  
+  const checkUserExists = async (usernameToCheck: string) => {
+    if (!usernameToCheck) {
+      setUserExists(false);
+      return;
+    }
+    
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", usernameToCheck));
+      const querySnapshot = await getDocs(q);
+      setUserExists(!querySnapshot.empty);
+    } catch (error) {
+      console.error("Error checking user:", error);
+      setUserExists(false);
+    }
+  };
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchUsername.trim()) {
+      navigate(`/${searchUsername.trim()}`);
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,11 +83,57 @@ const SendMessage = () => {
       setLoading(false);
     }
   };
+
+  if (!username) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
+        <div className="card-glass max-w-md w-full animate-fade-in">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Send Anonymous Message
+          </h2>
+          
+          <form onSubmit={handleSearch} className="space-y-4 mb-6">
+            <div className="relative">
+              <Input
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                placeholder="Enter username..."
+                className="glass pr-10"
+                required
+              />
+              <Button 
+                type="submit" 
+                variant="ghost" 
+                className="absolute right-0 top-0 h-full px-3"
+              >
+                <Search size={18} />
+              </Button>
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/80"
+            >
+              Find User
+            </Button>
+          </form>
+          
+          <p className="text-center text-sm text-muted-foreground">
+            Don't know their username? Ask them to share it with you!
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   if (userExists === null) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
-        <p>Loading...</p>
+        <div className="card-glass max-w-md w-full text-center">
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+          <p>Checking if user exists...</p>
+        </div>
       </div>
     );
   }
@@ -83,11 +144,30 @@ const SendMessage = () => {
         <div className="card-glass max-w-md w-full text-center animate-fade-in">
           <h2 className="text-2xl font-bold mb-4">User Not Found</h2>
           <p className="text-muted-foreground mb-6">
-            The Whispr link you're trying to access doesn't exist.
+            We couldn't find anyone with the username "{username}"
           </p>
-          <Link to="/">
-            <Button className="bg-primary hover:bg-primary/80">Go Home</Button>
-          </Link>
+          
+          <form onSubmit={handleSearch} className="space-y-4 mb-6">
+            <Input
+              value={searchUsername}
+              onChange={(e) => setSearchUsername(e.target.value)}
+              placeholder="Try another username..."
+              className="glass"
+              required
+            />
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/80"
+            >
+              Search
+            </Button>
+          </form>
+          
+          <div className="pt-4 border-t border-border">
+            <Link to="/">
+              <Button variant="outline" className="w-full">Go Home</Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
