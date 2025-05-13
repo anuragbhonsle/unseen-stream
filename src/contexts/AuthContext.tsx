@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
   signOut,
@@ -12,9 +11,9 @@ import {
   setDoc, 
   getDoc, 
   serverTimestamp, 
-  enableNetwork, 
-  initializeFirestore, 
-  CACHE_SIZE_UNLIMITED
+  enableNetwork,
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 
@@ -40,20 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modern approach to persistence
-  useEffect(() => {
-    // Configure Firestore with modern persistence approach
-    try {
-      initializeFirestore(auth.app, {
-        cache: {
-          sizeBytes: CACHE_SIZE_UNLIMITED
-        }
-      });
-      console.log("Modern Firestore cache configuration applied");
-    } catch (error) {
-      console.error("Error configuring Firestore cache:", error);
-    }
-  }, []);
+  // No need to reconfigure Firestore here as it's done in the firebase.ts file
+  // Just keep monitoring authentication state
   
   async function loginWithGoogle(customUsername?: string): Promise<void> {
     try {

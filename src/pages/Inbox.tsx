@@ -11,6 +11,9 @@ import {
   enableNetwork,
   limit,
   getDocs,
+  startAfter,
+  DocumentData,
+  QueryDocumentSnapshot
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -32,6 +35,7 @@ const Inbox = () => {
   const [loading, setLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const messagesPerPage = 10;
 
   useEffect(() => {
@@ -74,9 +78,14 @@ const Inbox = () => {
                 reported: doc.data().reported || false,
               });
             });
+            
+            // Set the last document for pagination
+            const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+            setLastVisible(lastDoc || null);
+            
             setMessages(messagesData);
             setLoading(false);
-            setHasMore(messagesData.length === messagesPerPage);
+            setHasMore(querySnapshot.docs.length === messagesPerPage);
           },
           (error) => {
             console.error("Error loading messages:", error);
@@ -102,18 +111,18 @@ const Inbox = () => {
   }, [currentUser, navigate]);
 
   const loadMoreMessages = async () => {
-    if (!currentUser || !currentUser.displayName || isLoadingMore || !hasMore) return;
+    if (!currentUser?.displayName || isLoadingMore || !hasMore || !lastVisible) return;
     
     setIsLoadingMore(true);
     
     try {
       const messagesRef = collection(db, "messages");
-      const lastMessage = messages[messages.length - 1];
       
       const q = query(
         messagesRef,
         where("recipientUsername", "==", currentUser.displayName),
         orderBy("timestamp", "desc"),
+        startAfter(lastVisible),
         limit(messagesPerPage)
       );
       
@@ -121,21 +130,25 @@ const Inbox = () => {
       
       const newMessages: Message[] = [];
       querySnapshot.forEach((doc) => {
-        if (!messages.some(m => m.id === doc.id)) {
-          newMessages.push({
-            id: doc.id,
-            message: doc.data().message,
-            timestamp: doc.data().timestamp,
-            reported: doc.data().reported || false,
-          });
-        }
+        newMessages.push({
+          id: doc.id,
+          message: doc.data().message,
+          timestamp: doc.data().timestamp,
+          reported: doc.data().reported || false,
+        });
       });
+      
+      // Update the last visible document
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+      if (lastDoc) {
+        setLastVisible(lastDoc);
+      }
       
       if (newMessages.length > 0) {
         setMessages(prev => [...prev, ...newMessages]);
       }
       
-      setHasMore(newMessages.length === messagesPerPage);
+      setHasMore(querySnapshot.docs.length === messagesPerPage);
     } catch (error) {
       console.error("Error loading more messages:", error);
       toast.error("Failed to load more messages");
