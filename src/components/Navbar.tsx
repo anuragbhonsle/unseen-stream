@@ -1,9 +1,18 @@
+
 import { Link } from "react-router-dom";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
@@ -19,6 +28,8 @@ const Navbar = () => {
       console.error("Failed to logout", error);
     }
   };
+
+  const profileUrl = currentUser?.displayName ? `${window.location.origin}/${currentUser.displayName}` : null;
 
   return (
     <nav className="w-full py-4 px-6 md:px-16 flex items-center justify-between glass fixed top-0 z-50">
@@ -51,32 +62,62 @@ const Navbar = () => {
             >
               Inbox
             </Link>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="text-foreground hover:text-primary transition-colors"
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-full border-primary">
+                  <User size={18} className="text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {currentUser.displayName && (
+                  <DropdownMenuItem className="flex flex-col items-start">
+                    <span className="font-medium">Username</span>
+                    <span className="text-xs text-muted-foreground">{currentUser.displayName}</span>
+                  </DropdownMenuItem>
+                )}
+                {profileUrl && (
+                  <DropdownMenuItem className="flex flex-col items-start">
+                    <span className="font-medium">Your Link</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-full">{profileUrl}</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                  Log Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+              aria-label="Toggle theme"
             >
-              Log Out
-            </Button>
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
           </>
         ) : (
-          <Link to="/auth">
-            <Button
-              variant="default"
-              className="bg-primary hover:bg-primary/80 transition-colors"
+          <>
+            <Link to="/auth">
+              <Button
+                variant="default"
+                className="bg-primary hover:bg-primary/80 transition-colors"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+              aria-label="Toggle theme"
             >
-              Sign In
-            </Button>
-          </Link>
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </>
         )}
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-secondary transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
       </div>
 
       {/* Mobile Menu Button */}
@@ -114,12 +155,29 @@ const Navbar = () => {
               >
                 Inbox
               </Link>
+              
+              <div className="py-2 px-3 bg-background/50 rounded-lg">
+                <h3 className="font-medium mb-1">Profile</h3>
+                {currentUser.displayName && (
+                  <div className="mb-2">
+                    <p className="text-sm text-muted-foreground">Username:</p>
+                    <p className="text-sm">{currentUser.displayName}</p>
+                  </div>
+                )}
+                {profileUrl && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Your link:</p>
+                    <p className="text-sm break-all">{profileUrl}</p>
+                  </div>
+                )}
+              </div>
+              
               <button
                 onClick={() => {
                   handleLogout();
                   setIsMenuOpen(false);
                 }}
-                className="text-left text-foreground hover:text-primary transition-colors"
+                className="text-left text-destructive hover:text-destructive/80 transition-colors"
               >
                 Log Out
               </button>

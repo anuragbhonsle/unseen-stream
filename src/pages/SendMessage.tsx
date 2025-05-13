@@ -36,9 +36,17 @@ const SendMessage = () => {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("username", "==", usernameToCheck));
       const querySnapshot = await getDocs(q);
-      setUserExists(!querySnapshot.empty);
+      
+      if (querySnapshot.empty) {
+        console.log(`No user found with username: ${usernameToCheck}`);
+        setUserExists(false);
+      } else {
+        console.log(`User found with username: ${usernameToCheck}`);
+        setUserExists(true);
+      }
     } catch (error) {
       console.error("Error checking user:", error);
+      toast.error("Error checking username. You may be offline.");
       setUserExists(false);
     }
   };
@@ -78,7 +86,7 @@ const SendMessage = () => {
       toast.success("Message sent anonymously!");
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      toast.error("Failed to send message. You may be offline.");
     } finally {
       setLoading(false);
     }

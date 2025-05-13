@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +8,7 @@ import {
   where,
   orderBy,
   onSnapshot,
+  enableNetwork,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -34,6 +36,18 @@ const Inbox = () => {
     }
 
     const username = currentUser.displayName;
+    
+    if (!username) {
+      toast.error("Your username is not set. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    // Ensure network is enabled
+    enableNetwork(db).catch(error => {
+      console.error("Error enabling network:", error);
+    });
+
     const messagesRef = collection(db, "messages");
     const q = query(
       messagesRef,
@@ -58,6 +72,7 @@ const Inbox = () => {
       },
       (error) => {
         console.error("Error fetching messages:", error);
+        toast.error("Error loading messages. You may be offline.");
         setLoading(false);
       }
     );
@@ -72,7 +87,7 @@ const Inbox = () => {
     navigator.clipboard
       .writeText(link)
       .then(() => {
-        toast.success("Whispr link copied to clipboard!");
+        toast.success("Visper link copied to clipboard!");
       })
       .catch((error) => {
         console.error("Failed to copy:", error);
@@ -88,14 +103,12 @@ const Inbox = () => {
 
           <div className="mb-6">
             <p className="text-muted-foreground mb-2">
-              Share your unique link to receive anonymous messages:
+              Share your username to receive anonymous messages:
             </p>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="bg-secondary p-2 px-3 rounded-lg flex-1 text-sm md:text-base overflow-hidden">
                 {currentUser && currentUser.displayName ? (
-                  <span>
-                    {window.location.origin}/{currentUser.displayName}
-                  </span>
+                  <span className="font-medium">{currentUser.displayName}</span>
                 ) : (
                   <span>Loading...</span>
                 )}
@@ -106,9 +119,12 @@ const Inbox = () => {
                 className="flex items-center gap-2"
               >
                 <Clipboard size={16} />
-                Copy
+                Copy Link
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Others can message you by going to: {window.location.origin}/{currentUser?.displayName}
+            </p>
           </div>
         </div>
 
@@ -132,7 +148,7 @@ const Inbox = () => {
           <div className="text-center py-10">
             <h3 className="text-lg font-medium mb-2">No messages yet</h3>
             <p className="text-muted-foreground mb-4">
-              Share your Visper link with friends to start receiving anonymous
+              Share your Visper username with friends to start receiving anonymous
               messages.
             </p>
             <Button

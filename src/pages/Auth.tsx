@@ -75,7 +75,9 @@ const Auth = () => {
       } else if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
         message = "Invalid email or password";
       } else if (error.code === "auth/operation-not-allowed") {
-        message = "This sign-in method is not enabled. Please contact support.";
+        message = "This sign-in method is not enabled. Please enable it in the Firebase console.";
+      } else if (error.message && error.message.includes("offline")) {
+        message = "You appear to be offline. Please check your internet connection.";
       }
       
       setError(message);
@@ -102,14 +104,22 @@ const Auth = () => {
     setError("");
     
     try {
+      // Always pass the username when using Google sign-in if we're showing the username input
+      // This ensures the custom username is used instead of the Google display name
       await loginWithGoogle(showGoogleUsername ? username : undefined);
       toast.success("Signed in with Google successfully!");
       navigate("/inbox");
     } catch (error: any) {
       let message = "Failed to sign in with Google";
-      if (error.message.includes("offline")) {
+      
+      if (error.message && error.message.includes("offline")) {
         message = "Network error. Please check your internet connection.";
+      } else if (error.code === "auth/operation-not-allowed") {
+        message = "Google sign-in is not enabled. Please enable it in the Firebase console.";
+      } else if (error.code === "auth/popup-closed-by-user") {
+        message = "Sign-in popup was closed before completing the process.";
       }
+      
       setError(message);
       console.error("Google sign in error:", error);
     } finally {
@@ -148,7 +158,7 @@ const Auth = () => {
                 required
               />
               <p className="text-xs text-muted-foreground">
-                This will be your unique Whispr link: whispr.app/{username}
+                This will be your unique Visper link: {window.location.origin}/{username}
               </p>
             </div>
             
@@ -184,7 +194,7 @@ const Auth = () => {
                     className="glass"
                   />
                   <p className="text-xs text-muted-foreground">
-                    This will be your unique Whispr link: whispr.app/{username}
+                    This will be your unique Visper link: {window.location.origin}/{username}
                   </p>
                 </div>
               )}
