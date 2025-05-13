@@ -102,11 +102,19 @@ const Inbox = () => {
       }
     };
 
-    const unsubscribe = loadInitialMessages();
+    // Start loading messages
+    const unsubscribePromise = loadInitialMessages();
+    
+    // Clean up function
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
+      // Handle the unsubscribe promise correctly
+      unsubscribePromise.then(unsubscribe => {
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      }).catch(error => {
+        console.error("Error unsubscribing:", error);
+      });
     };
   }, [currentUser, navigate]);
 
