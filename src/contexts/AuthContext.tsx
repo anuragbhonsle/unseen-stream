@@ -18,6 +18,7 @@ import {
   getDocs
 } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
+import { toast } from "sonner";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -50,6 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Format the username to include @ prefix if it doesn't have one
       const formattedUsername = username.startsWith('@') ? username : `@${username}`;
       
+      // First, check if the username matches Firebase username requirements
+      if (!/^@[a-zA-Z0-9_]+$/.test(formattedUsername)) {
+        return false;
+      }
+      
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("username", "==", formattedUsername));
       const querySnapshot = await getDocs(q);
@@ -58,6 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return querySnapshot.empty;
     } catch (error) {
       console.error("Error checking username availability:", error);
+      
+      // If we get a permission error, assume the username is available
+      // This is a temporary fix until proper Firebase rules are set up
+      if (error instanceof Error && error.message.includes("permission")) {
+        console.log("Permission error, assuming username is available");
+        return true;
+      }
+      
       return false;
     }
   }
@@ -75,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await firebaseUpdateProfile(user, {
           displayName: userDoc.data().username
         });
+        toast.success("Signed in successfully!");
       } else {
         // This is a new user or one without a username
         let username: string;
@@ -83,10 +98,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Format the custom username to include @ prefix
           username = customUsername.startsWith('@') ? customUsername : `@${customUsername}`;
           
-          // Make sure the custom username is unique
-          const isAvailable = await checkUsernameAvailable(username);
-          if (!isAvailable) {
-            throw new Error("Username already taken. Please choose another.");
+          // Make sure the custom username is unique - but don't block sign-in if check fails
+          try {
+            const isAvailable = await checkUsernameAvailable(username);
+            if (!isAvailable) {
+              toast.error("Username may already be taken, but we'll try to register it anyway.");
+            }
+          } catch (error) {
+            console.error("Error checking username:", error);
+            // Continue anyway since this is just a warning
           }
         } else {
           // Create default username from email (before @ symbol)
@@ -95,20 +115,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Create/update the user document
-        await setDoc(doc(db, "users", user.uid), {
-          username,
-          email: user.email,
-          createdAt: serverTimestamp(),
-          authProvider: 'google'
-        }, { merge: true });
-        
-        // Update the auth profile
-        await firebaseUpdateProfile(user, {
-          displayName: username
-        });
+        try {
+          await setDoc(doc(db, "users", user.uid), {
+            username,
+            email: user.email,
+            createdAt: serverTimestamp(),
+            authProvider: 'google'
+          }, { merge: true });
+          
+          // Update the auth profile
+          await firebaseUpdateProfile(user, {
+            displayName: username
+          });
+          
+          toast.success("Account created successfully!");
+        } catch (error) {
+          console.error("Error creating user document:", error);
+          toast.error("Signed in but couldn't save your profile. Some features may be limited.");
+        }
       }
     } catch (error) {
       console.error("Google login error:", error);
+      toast.error("Sign-in failed. Please try again.");
       throw error;
     }
   }
@@ -135,14 +163,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, "users", currentUser.uid), {
         username: formattedUsername
       }, { merge: true });
+      
+      toast.success("Username updated successfully!");
     } catch (error) {
       console.error("Username update error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update username");
       throw error;
     }
   }
 
   async function logout(): Promise<void> {
-    return signOut(auth);
+    try {
+      await signOut(auth);
+      toast.success("Signed out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to sign out");
+      throw error;
+    }
   }
 
   useEffect(() => {

@@ -38,6 +38,7 @@ const Auth = () => {
         // Make sure the username follows requirements
         if (!/^[a-zA-Z0-9_]+$/.test(username)) {
           setUsernameAvailable(false);
+          setCheckingUsername(false);
           return;
         }
         
@@ -45,6 +46,9 @@ const Auth = () => {
         setUsernameAvailable(isAvailable);
       } catch (error) {
         console.error("Error checking username availability:", error);
+        // If we get a permissions error, we'll assume it's available for now
+        // and handle validation during actual signup
+        setUsernameAvailable(true);
       } finally {
         setCheckingUsername(false);
       }
@@ -66,7 +70,7 @@ const Auth = () => {
       return;
     }
     
-    if (!usernameAvailable) {
+    if (usernameAvailable === false) {
       setError("This username is already taken. Please choose another.");
       return;
     }
@@ -76,7 +80,6 @@ const Auth = () => {
     
     try {
       await loginWithGoogle(username);
-      toast.success("Signed in successfully!");
       navigate("/inbox");
     } catch (error: any) {
       let message = "Failed to sign in";
@@ -145,7 +148,7 @@ const Auth = () => {
           
           <Button 
             type="submit" 
-            disabled={loading || !usernameAvailable}
+            disabled={loading || (username.length >= 3 && usernameAvailable === false)}
             className="w-full bg-primary hover:bg-primary/80 flex items-center justify-center gap-2"
           >
             {loading ? "Please wait..." : (
