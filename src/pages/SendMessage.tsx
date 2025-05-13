@@ -37,16 +37,10 @@ const SendMessage = () => {
       const q = query(usersRef, where("username", "==", usernameToCheck));
       const querySnapshot = await getDocs(q);
       
-      if (querySnapshot.empty) {
-        console.log(`No user found with username: ${usernameToCheck}`);
-        setUserExists(false);
-      } else {
-        console.log(`User found with username: ${usernameToCheck}`);
-        setUserExists(true);
-      }
+      setUserExists(!querySnapshot.empty);
     } catch (error) {
       console.error("Error checking user:", error);
-      toast.error("Error checking username. You may be offline.");
+      toast.error("Error checking username. Please try again.");
       setUserExists(false);
     }
   };
@@ -86,7 +80,7 @@ const SendMessage = () => {
       toast.success("Message sent anonymously!");
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message. You may be offline.");
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -137,10 +131,10 @@ const SendMessage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
         <div className="card-glass max-w-md w-full text-center">
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="flex justify-center items-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-          <p>Checking if user exists...</p>
+          <p>Checking username...</p>
         </div>
       </div>
     );

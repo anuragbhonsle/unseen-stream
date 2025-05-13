@@ -1,21 +1,26 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User,
   signInWithPopup,
   updateProfile as firebaseUpdateProfile
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp, enableNetwork, enableIndexedDbPersistence } from "firebase/firestore";
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  serverTimestamp, 
+  enableNetwork, 
+  initializeFirestore, 
+  CACHE_SIZE_UNLIMITED
+} from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  signup: (email: string, password: string, username: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (customUsername?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUsername: (username: string) => Promise<void>;
@@ -35,61 +40,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Enable offline persistence on initial load
+  // Modern approach to persistence
   useEffect(() => {
-    enableIndexedDbPersistence(db)
-      .then(() => {
-        console.log("Offline persistence enabled");
-      })
-      .catch((error) => {
-        console.error("Error enabling offline persistence:", error);
+    // Configure Firestore with modern persistence approach
+    try {
+      initializeFirestore(auth.app, {
+        cache: {
+          sizeBytes: CACHE_SIZE_UNLIMITED
+        }
       });
+      console.log("Modern Firestore cache configuration applied");
+    } catch (error) {
+      console.error("Error configuring Firestore cache:", error);
+    }
   }, []);
-
-  async function signup(email: string, password: string, username: string): Promise<void> {
-    try {
-      // Ensure network is enabled
-      await enableNetwork(db);
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Store additional user data in Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        username,
-        email,
-        createdAt: serverTimestamp(),
-      });
-      
-      // Update user display name
-      await firebaseUpdateProfile(userCredential.user, {
-        displayName: username
-      });
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async function login(email: string, password: string): Promise<void> {
-    try {
-      // Ensure network is enabled
-      await enableNetwork(db);
-      
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
-    }
-  }
   
   async function loginWithGoogle(customUsername?: string): Promise<void> {
     try {
-      // Ensure network is enabled
+      // Ensure network is enabled for reliable auth
       await enableNetwork(db);
       
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // If a custom username was provided, use it
-      // Otherwise check if this user already has a username in Firestore
+      // If a custom username was provided, use it instead of Google display name
       if (customUsername) {
         // Update both Firestore and Auth profile with the custom username
         await setDoc(doc(db, "users", user.uid), {
@@ -107,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Check if this user already exists in Firestore
+      // Check if this user already has records in Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       
       if (userDoc.exists() && userDoc.data().username) {
@@ -117,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else {
         // This is a new user or one without a username
-        // For new users, we'll use a default username based on email
+        // Create default username from email (before @ symbol)
         const defaultUsername = user.email?.split('@')[0] || '';
         
         await setDoc(doc(db, "users", user.uid), {
@@ -132,6 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (error) {
+      console.error("Google login error:", error);
+      // Throw a more user-friendly error
+      if (error instanceof Error) {
+        if (error.message.includes("offline")) {
+          throw new Error("Network connection issue. Please check your internet connection.");
+        }
+      }
       throw error;
     }
   }
@@ -153,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         username
       }, { merge: true });
     } catch (error) {
+      console.error("Username update error:", error);
       throw error;
     }
   }
@@ -173,8 +155,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     currentUser,
     loading,
-    signup,
-    login,
     loginWithGoogle,
     logout,
     updateUsername

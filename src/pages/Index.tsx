@@ -113,7 +113,7 @@ const Index = () => {
       {/* How It Works Section */}
       <section ref={howItWorksRef} className="py-20 px-4 bg-secondary/30">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How Whispr Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How Visper Works</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
@@ -129,7 +129,7 @@ const Index = () => {
                 <span className="text-primary font-bold text-xl">2</span>
               </div>
               <h3 className="text-xl font-medium mb-2">Share Your Username</h3>
-              <p className="text-muted-foreground">Tell friends your Whispr username so they can message you</p>
+              <p className="text-muted-foreground">Tell friends your Visper username so they can message you</p>
             </div>
             
             <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
@@ -164,7 +164,7 @@ const Index = () => {
         <div className="max-w-3xl mx-auto space-y-6">
           <h2 className="text-2xl md:text-3xl font-bold">Ready to hear what people really think?</h2>
           <p className="text-muted-foreground">
-            Join thousands of users receiving honest, anonymous feedback through Whispr.
+            Join thousands of users receiving honest, anonymous feedback through Visper.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
@@ -178,7 +178,7 @@ const Index = () => {
               <>
                 <Link to="/auth">
                   <Button className="bg-primary hover:bg-primary/80 transition-colors w-full sm:w-auto px-8">
-                    Get My Whispr Username
+                    Get My Visper Username
                   </Button>
                 </Link>
                 <Link to="/about">

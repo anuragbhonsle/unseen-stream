@@ -30,6 +30,18 @@ const Navbar = () => {
   };
 
   const profileUrl = currentUser?.displayName ? `${window.location.origin}/${currentUser.displayName}` : null;
+  
+  const copyProfileLink = () => {
+    if (profileUrl) {
+      navigator.clipboard.writeText(profileUrl)
+        .then(() => {
+          console.log("Profile link copied to clipboard");
+        })
+        .catch(err => {
+          console.error("Could not copy text: ", err);
+        });
+    }
+  };
 
   return (
     <nav className="w-full py-4 px-6 md:px-16 flex items-center justify-between glass fixed top-0 z-50">
@@ -79,8 +91,8 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 )}
                 {profileUrl && (
-                  <DropdownMenuItem className="flex flex-col items-start">
-                    <span className="font-medium">Your Link</span>
+                  <DropdownMenuItem onClick={copyProfileLink} className="flex flex-col items-start cursor-pointer">
+                    <span className="font-medium">Your Link (click to copy)</span>
                     <span className="text-xs text-muted-foreground truncate max-w-full">{profileUrl}</span>
                   </DropdownMenuItem>
                 )}
@@ -168,6 +180,14 @@ const Navbar = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Your link:</p>
                     <p className="text-sm break-all">{profileUrl}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="mt-1 text-primary text-xs p-0 h-auto"
+                      onClick={copyProfileLink}
+                    >
+                      Copy to clipboard
+                    </Button>
                   </div>
                 )}
               </div>
