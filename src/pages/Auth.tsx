@@ -6,22 +6,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   
   const navigate = useNavigate();
-  const { loginWithGoogle, currentUser } = useAuth();
+  const { loginWithGoogle, currentUser, checkUsernameAvailable } = useAuth();
   
   useEffect(() => {
     if (currentUser) {
       navigate("/inbox");
     }
   }, [currentUser, navigate]);
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setCheckingUsername(true);
+      try {
+        // Make sure the username follows requirements
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          setUsernameAvailable(false);
+          return;
+        }
+        
+        const isAvailable = await checkUsernameAvailable(username);
+        setUsernameAvailable(isAvailable);
+      } catch (error) {
+        console.error("Error checking username availability:", error);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [username, checkUsernameAvailable]);
 
   const handleGoogleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +66,11 @@ const Auth = () => {
       return;
     }
     
+    if (!usernameAvailable) {
+      setError("This username is already taken. Please choose another.");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     
@@ -46,7 +81,9 @@ const Auth = () => {
     } catch (error: any) {
       let message = "Failed to sign in";
       
-      if (error.message && error.message.includes("offline")) {
+      if (error.message && error.message.includes("already taken")) {
+        message = error.message;
+      } else if (error.message && error.message.includes("offline")) {
         message = "Network error. Please check your internet connection.";
       } else if (error.code === "auth/operation-not-allowed") {
         message = "Google sign-in is not enabled in Firebase settings.";
@@ -78,22 +115,37 @@ const Auth = () => {
         <form onSubmit={handleGoogleSignIn} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Choose Your Username</Label>
-            <Input
-              id="username"
-              placeholder="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="glass"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="username"
+                placeholder="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="glass pl-7"
+                required
+              />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
+              
+              {username.length >= 3 && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {checkingUsername ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : usernameAvailable ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  )}
+                </div>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              This will be your unique Visper link: {window.location.origin}/{username}
+              This will be your unique Visper link: {window.location.origin}/@{username}
             </p>
           </div>
           
           <Button 
             type="submit" 
-            disabled={loading}
+            disabled={loading || !usernameAvailable}
             className="w-full bg-primary hover:bg-primary/80 flex items-center justify-center gap-2"
           >
             {loading ? "Please wait..." : (

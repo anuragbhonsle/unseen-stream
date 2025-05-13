@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
   signOut,
@@ -11,9 +12,10 @@ import {
   setDoc, 
   getDoc, 
   serverTimestamp, 
-  enableNetwork,
-  persistentLocalCache,
-  persistentMultipleTabManager
+  collection,
+  query,
+  where,
+  getDocs
 } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 
@@ -23,6 +25,7 @@ interface AuthContextType {
   loginWithGoogle: (customUsername?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUsername: (username: string) => Promise<void>;
+  checkUsernameAvailable: (username: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,87 +41,99 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // No need to reconfigure Firestore here as it's done in the firebase.ts file
-  // Just keep monitoring authentication state
+  
+  // Check if a username is available (not already taken)
+  async function checkUsernameAvailable(username: string): Promise<boolean> {
+    if (!username || username.length < 3) return false;
+    
+    try {
+      // Format the username to include @ prefix if it doesn't have one
+      const formattedUsername = username.startsWith('@') ? username : `@${username}`;
+      
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", formattedUsername));
+      const querySnapshot = await getDocs(q);
+      
+      // If the query is empty, the username is available
+      return querySnapshot.empty;
+    } catch (error) {
+      console.error("Error checking username availability:", error);
+      return false;
+    }
+  }
   
   async function loginWithGoogle(customUsername?: string): Promise<void> {
     try {
-      // Ensure network is enabled for reliable auth
-      await enableNetwork(db);
-      
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // If a custom username was provided, use it instead of Google display name
-      if (customUsername) {
-        // Update both Firestore and Auth profile with the custom username
-        await setDoc(doc(db, "users", user.uid), {
-          username: customUsername,
-          email: user.email,
-          createdAt: serverTimestamp(),
-          authProvider: 'google'
-        }, { merge: true });
-        
-        // Update user display name
-        await firebaseUpdateProfile(user, {
-          displayName: customUsername
-        });
-        
-        return;
-      }
-      
-      // Check if this user already has records in Firestore
+      // Check if user already exists in Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       
       if (userDoc.exists() && userDoc.data().username) {
-        // User exists and has a username, update auth profile to match Firestore
+        // User exists, update auth profile to match Firestore
         await firebaseUpdateProfile(user, {
           displayName: userDoc.data().username
         });
       } else {
         // This is a new user or one without a username
-        // Create default username from email (before @ symbol)
-        const defaultUsername = user.email?.split('@')[0] || '';
+        let username: string;
         
+        if (customUsername) {
+          // Format the custom username to include @ prefix
+          username = customUsername.startsWith('@') ? customUsername : `@${customUsername}`;
+          
+          // Make sure the custom username is unique
+          const isAvailable = await checkUsernameAvailable(username);
+          if (!isAvailable) {
+            throw new Error("Username already taken. Please choose another.");
+          }
+        } else {
+          // Create default username from email (before @ symbol)
+          const defaultUsername = `@${user.email?.split('@')[0] || ''}`;
+          username = defaultUsername;
+        }
+        
+        // Create/update the user document
         await setDoc(doc(db, "users", user.uid), {
-          username: defaultUsername,
+          username,
           email: user.email,
           createdAt: serverTimestamp(),
           authProvider: 'google'
         }, { merge: true });
         
+        // Update the auth profile
         await firebaseUpdateProfile(user, {
-          displayName: defaultUsername
+          displayName: username
         });
       }
     } catch (error) {
       console.error("Google login error:", error);
-      // Throw a more user-friendly error
-      if (error instanceof Error) {
-        if (error.message.includes("offline")) {
-          throw new Error("Network connection issue. Please check your internet connection.");
-        }
-      }
       throw error;
     }
   }
 
-  async function updateUsername(username: string): Promise<void> {
+  async function updateUsername(newUsername: string): Promise<void> {
     if (!currentUser) throw new Error("No user logged in");
     
     try {
-      // Ensure network is enabled
-      await enableNetwork(db);
+      // Format the username to include @ prefix
+      const formattedUsername = newUsername.startsWith('@') ? newUsername : `@${newUsername}`;
+      
+      // Check if username is already taken
+      const isAvailable = await checkUsernameAvailable(formattedUsername);
+      if (!isAvailable) {
+        throw new Error("Username already taken. Please choose another.");
+      }
       
       // Update in Firebase Auth
       await firebaseUpdateProfile(currentUser, {
-        displayName: username
+        displayName: formattedUsername
       });
       
       // Update in Firestore
       await setDoc(doc(db, "users", currentUser.uid), {
-        username
+        username: formattedUsername
       }, { merge: true });
     } catch (error) {
       console.error("Username update error:", error);
@@ -144,7 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     loginWithGoogle,
     logout,
-    updateUsername
+    updateUsername,
+    checkUsernameAvailable
   };
 
   return (

@@ -42,7 +42,9 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/:username" element={<SendMessage />} />
+                  <Route path="/@:username" element={<SendMessage />} />
+                  {/* Legacy route without @ symbol for compatibility */}
+                  <Route path="/:username" element={<NotFound />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

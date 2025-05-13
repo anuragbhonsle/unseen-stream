@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 import SendMessage from "./SendMessage";
 
 const NotFound = () => {
@@ -14,13 +15,18 @@ const NotFound = () => {
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    // Extract username from the pathname
+    // Extract potential username from the pathname
     const pathParts = location.pathname.split("/");
-    // The username would be the last part of the path
-    const potentialUsername = pathParts[pathParts.length - 1];
-
+    // The username would be the last part of the path (including @ symbol)
+    let potentialUsername = pathParts[pathParts.length - 1];
+    
     // Check if this might be a username route
     if (potentialUsername && potentialUsername !== "") {
+      // Make sure it has the @ prefix for checking
+      if (!potentialUsername.startsWith('@')) {
+        potentialUsername = `@${potentialUsername}`;
+      }
+      
       // Check in Firebase if this username exists
       const checkUsername = async () => {
         try {
@@ -48,7 +54,7 @@ const NotFound = () => {
     } else {
       setChecking(false);
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname]);
 
   // Return the SendMessage component if we found a valid username
   if (isUser && username) {

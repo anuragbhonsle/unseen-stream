@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 
 const SendMessage = () => {
   const { username } = useParams<{ username: string }>();
@@ -33,8 +33,13 @@ const SendMessage = () => {
     }
     
     try {
+      // Make sure username has @ prefix for database query
+      const formattedUsername = usernameToCheck.startsWith('@') 
+        ? usernameToCheck 
+        : `@${usernameToCheck}`;
+      
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("username", "==", usernameToCheck));
+      const q = query(usersRef, where("username", "==", formattedUsername));
       const querySnapshot = await getDocs(q);
       
       setUserExists(!querySnapshot.empty);
@@ -48,7 +53,12 @@ const SendMessage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchUsername.trim()) {
-      navigate(`/${searchUsername.trim()}`);
+      // Remove @ if user typed it at the start
+      const formattedUsername = searchUsername.trim().startsWith('@')
+        ? searchUsername.trim().substring(1)
+        : searchUsername.trim();
+      
+      navigate(`/@${formattedUsername}`);
     }
   };
   
@@ -68,9 +78,14 @@ const SendMessage = () => {
     setLoading(true);
     
     try {
+      // Format the username with @ prefix for the database
+      const formattedUsername = username?.startsWith('@') 
+        ? username 
+        : `@${username}`;
+      
       await addDoc(collection(db, "messages"), {
         message: message.trim(),
-        recipientUsername: username,
+        recipientUsername: formattedUsername,
         timestamp: serverTimestamp(),
         reported: false
       });
@@ -86,6 +101,7 @@ const SendMessage = () => {
     }
   };
 
+  // No username provided - search form
   if (!username) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
@@ -100,9 +116,10 @@ const SendMessage = () => {
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
                 placeholder="Enter username..."
-                className="glass pr-10"
+                className="glass pl-7"
                 required
               />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
               <Button 
                 type="submit" 
                 variant="ghost" 
@@ -127,6 +144,7 @@ const SendMessage = () => {
     );
   }
   
+  // Loading state
   if (userExists === null) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
@@ -140,6 +158,7 @@ const SendMessage = () => {
     );
   }
   
+  // User not found
   if (userExists === false) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
@@ -150,13 +169,16 @@ const SendMessage = () => {
           </p>
           
           <form onSubmit={handleSearch} className="space-y-4 mb-6">
-            <Input
-              value={searchUsername}
-              onChange={(e) => setSearchUsername(e.target.value)}
-              placeholder="Try another username..."
-              className="glass"
-              required
-            />
+            <div className="relative">
+              <Input
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                placeholder="Try another username..."
+                className="glass pl-7"
+                required
+              />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
+            </div>
             <Button 
               type="submit" 
               className="w-full bg-primary hover:bg-primary/80"
@@ -175,6 +197,7 @@ const SendMessage = () => {
     );
   }
   
+  // Message sent confirmation
   if (sent) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
@@ -199,6 +222,7 @@ const SendMessage = () => {
     );
   }
 
+  // Send message form
   return (
     <div className="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
       <div className="card-glass max-w-md w-full animate-fade-in">
@@ -225,7 +249,12 @@ const SendMessage = () => {
             disabled={loading || !message.trim()}
             className="w-full bg-primary hover:bg-primary/80"
           >
-            {loading ? "Sending..." : "Send Anonymously"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Sending...</span>
+              </div>
+            ) : "Send Anonymously"}
           </Button>
         </form>
       </div>

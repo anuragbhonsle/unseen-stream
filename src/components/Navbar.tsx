@@ -1,10 +1,11 @@
 
 import { Link } from "react-router-dom";
-import { Moon, Sun, Menu, X, User } from "lucide-react";
+import { Moon, Sun, Menu, X, User, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { currentUser, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -29,13 +31,24 @@ const Navbar = () => {
     }
   };
 
-  const profileUrl = currentUser?.displayName ? `${window.location.origin}/${currentUser.displayName}` : null;
+  const getProfileUrl = () => {
+    if (!currentUser?.displayName) return null;
+    // Handle usernames with or without @ symbol
+    const username = currentUser.displayName.startsWith('@') 
+      ? currentUser.displayName.substring(1) 
+      : currentUser.displayName;
+    return `${window.location.origin}/@${username}`;
+  };
+  
+  const profileUrl = getProfileUrl();
   
   const copyProfileLink = () => {
     if (profileUrl) {
       navigator.clipboard.writeText(profileUrl)
         .then(() => {
-          console.log("Profile link copied to clipboard");
+          setCopied(true);
+          toast.success("Profile link copied to clipboard!");
+          setTimeout(() => setCopied(false), 2000);
         })
         .catch(err => {
           console.error("Could not copy text: ", err);
@@ -93,7 +106,14 @@ const Navbar = () => {
                 {profileUrl && (
                   <DropdownMenuItem onClick={copyProfileLink} className="flex flex-col items-start cursor-pointer">
                     <span className="font-medium">Your Link (click to copy)</span>
-                    <span className="text-xs text-muted-foreground truncate max-w-full">{profileUrl}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground truncate max-w-[180px]">{profileUrl}</span>
+                      {copied ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -186,7 +206,7 @@ const Navbar = () => {
                       className="mt-1 text-primary text-xs p-0 h-auto"
                       onClick={copyProfileLink}
                     >
-                      Copy to clipboard
+                      {copied ? "Copied!" : "Copy to clipboard"}
                     </Button>
                   </div>
                 )}

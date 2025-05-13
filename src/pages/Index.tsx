@@ -38,7 +38,12 @@ const Index = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchUsername.trim()) {
-      navigate(`/${searchUsername.trim()}`);
+      // Remove @ if user typed it at the start
+      const formattedUsername = searchUsername.trim().startsWith('@')
+        ? searchUsername.trim().substring(1)
+        : searchUsername.trim();
+      
+      navigate(`/@${formattedUsername}`);
     }
   };
 
@@ -60,10 +65,11 @@ const Index = () => {
               <div className="relative">
                 <Input 
                   placeholder="Enter a username..."
-                  className="glass pr-10 py-6 text-lg"
+                  className="glass py-6 text-lg pl-9"
                   value={searchUsername}
                   onChange={(e) => setSearchUsername(e.target.value)}
                 />
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">@</span>
                 <Button 
                   type="submit" 
                   variant="ghost" 
@@ -121,7 +127,7 @@ const Index = () => {
                 <span className="text-primary font-bold text-xl">1</span>
               </div>
               <h3 className="text-xl font-medium mb-2">Create Account</h3>
-              <p className="text-muted-foreground">Sign up to receive messages and get your unique username</p>
+              <p className="text-muted-foreground">Sign up to receive messages and get your unique @username</p>
             </div>
             
             <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
@@ -129,7 +135,7 @@ const Index = () => {
                 <span className="text-primary font-bold text-xl">2</span>
               </div>
               <h3 className="text-xl font-medium mb-2">Share Your Username</h3>
-              <p className="text-muted-foreground">Tell friends your Visper username so they can message you</p>
+              <p className="text-muted-foreground">Tell friends your @username so they can message you</p>
             </div>
             
             <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">

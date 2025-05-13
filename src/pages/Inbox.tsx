@@ -1,174 +1,42 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  enableNetwork,
-  limit,
-  getDocs,
-  startAfter,
-  DocumentData,
-  QueryDocumentSnapshot
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Clipboard } from "lucide-react";
-import MessageCard from "@/components/MessageCard";
-
-interface Message {
-  id: string;
-  message: string;
-  timestamp: any;
-  reported: boolean;
-}
+import { Clipboard, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import InboxHeader from "@/components/inbox/InboxHeader";
+import MessageList from "@/components/inbox/MessageList";
+import { useInboxMessages } from "@/hooks/useInboxMessages";
 
 const Inbox = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const messagesPerPage = 10;
+  
+  const { 
+    messages, 
+    loading, 
+    loadMoreMessages, 
+    isLoadingMore, 
+    hasMore 
+  } = useInboxMessages();
 
   useEffect(() => {
     if (!currentUser) {
       navigate("/auth");
-      return;
     }
-
-    const username = currentUser.displayName;
-    
-    if (!username) {
-      toast.error("Your username is not set. Please contact support.");
-      setLoading(false);
-      return;
-    }
-
-    // Enable network and load initial messages
-    const loadInitialMessages = async () => {
-      try {
-        await enableNetwork(db);
-        
-        const messagesRef = collection(db, "messages");
-        const q = query(
-          messagesRef,
-          where("recipientUsername", "==", username),
-          orderBy("timestamp", "desc"),
-          limit(messagesPerPage)
-        );
-
-        // Use onSnapshot for real-time updates
-        const unsubscribe = onSnapshot(
-          q,
-          (querySnapshot) => {
-            const messagesData: Message[] = [];
-            querySnapshot.forEach((doc) => {
-              messagesData.push({
-                id: doc.id,
-                message: doc.data().message,
-                timestamp: doc.data().timestamp,
-                reported: doc.data().reported || false,
-              });
-            });
-            
-            // Set the last document for pagination
-            const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-            setLastVisible(lastDoc || null);
-            
-            setMessages(messagesData);
-            setLoading(false);
-            setHasMore(querySnapshot.docs.length === messagesPerPage);
-          },
-          (error) => {
-            console.error("Error loading messages:", error);
-            toast.error("Error loading messages. Please try again.");
-            setLoading(false);
-          }
-        );
-
-        return unsubscribe;
-      } catch (error) {
-        console.error("Error loading initial messages:", error);
-        setLoading(false);
-        return () => {};
-      }
-    };
-
-    // Start loading messages
-    const unsubscribePromise = loadInitialMessages();
-    
-    // Clean up function
-    return () => {
-      // Handle the unsubscribe promise correctly
-      unsubscribePromise.then(unsubscribe => {
-        if (typeof unsubscribe === 'function') {
-          unsubscribe();
-        }
-      }).catch(error => {
-        console.error("Error unsubscribing:", error);
-      });
-    };
   }, [currentUser, navigate]);
-
-  const loadMoreMessages = async () => {
-    if (!currentUser?.displayName || isLoadingMore || !hasMore || !lastVisible) return;
-    
-    setIsLoadingMore(true);
-    
-    try {
-      const messagesRef = collection(db, "messages");
-      
-      const q = query(
-        messagesRef,
-        where("recipientUsername", "==", currentUser.displayName),
-        orderBy("timestamp", "desc"),
-        startAfter(lastVisible),
-        limit(messagesPerPage)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      const newMessages: Message[] = [];
-      querySnapshot.forEach((doc) => {
-        newMessages.push({
-          id: doc.id,
-          message: doc.data().message,
-          timestamp: doc.data().timestamp,
-          reported: doc.data().reported || false,
-        });
-      });
-      
-      // Update the last visible document
-      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-      if (lastDoc) {
-        setLastVisible(lastDoc);
-      }
-      
-      if (newMessages.length > 0) {
-        setMessages(prev => [...prev, ...newMessages]);
-      }
-      
-      setHasMore(querySnapshot.docs.length === messagesPerPage);
-    } catch (error) {
-      console.error("Error loading more messages:", error);
-      toast.error("Failed to load more messages");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
 
   const copyLinkToClipboard = () => {
     if (!currentUser || !currentUser.displayName) return;
 
-    const link = `${window.location.origin}/${currentUser.displayName}`;
+    // Format the username for the URL (remove @ if present)
+    const username = currentUser.displayName.startsWith('@') 
+      ? currentUser.displayName.substring(1) 
+      : currentUser.displayName;
+      
+    const link = `${window.location.origin}/@${username}`;
+    
     navigator.clipboard
       .writeText(link)
       .then(() => {
@@ -180,38 +48,17 @@ const Inbox = () => {
       });
   };
 
+  if (!currentUser) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="card-glass mb-8">
-          <h1 className="text-2xl font-bold mb-4">Your Visper Inbox</h1>
-
-          <div className="mb-6">
-            <p className="text-muted-foreground mb-2">
-              Share your username to receive anonymous messages:
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="bg-secondary p-2 px-3 rounded-lg flex-1 text-sm md:text-base overflow-hidden">
-                {currentUser && currentUser.displayName ? (
-                  <span className="font-medium">{currentUser.displayName}</span>
-                ) : (
-                  <span>Loading...</span>
-                )}
-              </div>
-              <Button
-                onClick={copyLinkToClipboard}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Clipboard size={16} />
-                Copy Link
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Others can message you by going to: {window.location.origin}/{currentUser?.displayName}
-            </p>
-          </div>
-        </div>
+        <InboxHeader 
+          username={currentUser.displayName || ""} 
+          onCopyLink={copyLinkToClipboard} 
+        />
 
         <h2 className="text-xl font-semibold mb-4">Your Messages</h2>
 
@@ -221,17 +68,7 @@ const Inbox = () => {
           </div>
         ) : messages.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-4">
-              {messages.map((message) => (
-                <MessageCard
-                  key={message.id}
-                  id={message.id}
-                  message={message.message}
-                  timestamp={message.timestamp}
-                  reported={message.reported}
-                />
-              ))}
-            </div>
+            <MessageList messages={messages} />
             
             {hasMore && (
               <div className="mt-6 text-center">
@@ -242,7 +79,7 @@ const Inbox = () => {
                 >
                   {isLoadingMore ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Loading...
                     </>
                   ) : (
