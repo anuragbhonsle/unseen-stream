@@ -23,8 +23,7 @@ const DevModal: React.FC<DevModalProps> = ({ isOpen, onClose }) => {
         </h3>
         <p className="mb-4">You're not just a user, you're curious.</p>
         <p className="mb-4">
-          I'm Anurag. No mentor, no roadmap. Just faith, fire, and
-          StackOverflow.
+          Fueled by caffein, breakthroughs, and late-night code.
         </p>
         <p className="mb-4">
           Thanks for checking out Eclipz. Now go build something legendary.
@@ -43,7 +42,7 @@ const Footer = () => {
   };
 
   useEffect(() => {
-    if (clickCount >= 5) {
+    if (clickCount >= 1) {
       setShowModal(true);
       setClickCount(0);
     }
