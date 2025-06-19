@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ const About = () => {
     <div className="min-h-screen pt-24 pb-10 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="card-glass">
-          <h1 className="text-3xl font-bold mb-6">About Visper</h1>
+          <h1 className="text-3xl font-bold mb-6">About Eclipz</h1>
 
           <div className="space-y-6">
             <div>
@@ -18,7 +19,7 @@ const About = () => {
                 Hey, I'm Anurag – React dev from Pune 🇮🇳.
               </p>
               <p className="text-muted-foreground mb-4">
-                Whispr was built to blend anonymity, UI, and a little mystery. I
+                Eclipz was built to blend anonymity, UI, and a little mystery. I
                 love clean UIs, deep chats, coding at 3AM, and learning
                 something new every day. When I'm not doing LeetCode or making
                 coffee for my mom, I'm probably deep in the Word, thanking God

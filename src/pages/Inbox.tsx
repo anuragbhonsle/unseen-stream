@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Clipboard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import InboxHeader from "@/components/inbox/InboxHeader";
 import MessageList from "@/components/inbox/MessageList";
@@ -30,7 +30,6 @@ const Inbox = () => {
   const copyLinkToClipboard = () => {
     if (!currentUser || !currentUser.displayName) return;
 
-    // Format the username for the URL (remove @ if present)
     const username = currentUser.displayName.startsWith('@') 
       ? currentUser.displayName.substring(1) 
       : currentUser.displayName;
@@ -40,7 +39,7 @@ const Inbox = () => {
     navigator.clipboard
       .writeText(link)
       .then(() => {
-        toast.success("Visper link copied to clipboard!");
+        toast.success("Eclipz link copied to clipboard!");
       })
       .catch((error) => {
         console.error("Failed to copy:", error);
@@ -49,7 +48,7 @@ const Inbox = () => {
   };
 
   if (!currentUser) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -93,7 +92,7 @@ const Inbox = () => {
           <div className="text-center py-10">
             <h3 className="text-lg font-medium mb-2">No messages yet</h3>
             <p className="text-muted-foreground mb-4">
-              Share your Visper username with friends to start receiving anonymous
+              Share your Eclipz username with friends to start receiving anonymous
               messages.
             </p>
             <Button

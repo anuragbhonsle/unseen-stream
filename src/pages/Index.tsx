@@ -38,7 +38,6 @@ const Index = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchUsername.trim()) {
-      // Remove @ if user typed it at the start
       const formattedUsername = searchUsername.trim().startsWith('@')
         ? searchUsername.trim().substring(1)
         : searchUsername.trim();
@@ -119,7 +118,7 @@ const Index = () => {
       {/* How It Works Section */}
       <section ref={howItWorksRef} className="py-20 px-4 bg-secondary/30">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How Visper Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How Eclipz Works</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             <div className="card-glass flex flex-col items-center text-center p-8 h-full transition-transform hover:scale-105">
@@ -170,7 +169,7 @@ const Index = () => {
         <div className="max-w-3xl mx-auto space-y-6">
           <h2 className="text-2xl md:text-3xl font-bold">Ready to hear what people really think?</h2>
           <p className="text-muted-foreground">
-            Join thousands of users receiving honest, anonymous feedback through Visper.
+            Join thousands of users receiving honest, anonymous feedback through Eclipz.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
@@ -184,7 +183,7 @@ const Index = () => {
               <>
                 <Link to="/auth">
                   <Button className="bg-primary hover:bg-primary/80 transition-colors w-full sm:w-auto px-8">
-                    Get My Visper Username
+                    Get My Eclipz Username
                   </Button>
                 </Link>
                 <Link to="/about">

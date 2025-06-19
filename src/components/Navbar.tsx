@@ -33,7 +33,6 @@ const Navbar = () => {
 
   const getProfileUrl = () => {
     if (!currentUser?.displayName) return null;
-    // Handle usernames with or without @ symbol
     const username = currentUser.displayName.startsWith('@') 
       ? currentUser.displayName.substring(1) 
       : currentUser.displayName;
@@ -60,7 +59,7 @@ const Navbar = () => {
     <nav className="w-full py-4 px-6 md:px-16 flex items-center justify-between glass fixed top-0 z-50">
       <Link to="/" className="flex items-center">
         <h1 className="font-bold text-xl text-foreground">
-          <span className="text-primary">Visper</span>
+          <span className="text-primary">Eclipz</span>
         </h1>
       </Link>
 

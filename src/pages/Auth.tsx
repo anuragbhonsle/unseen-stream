@@ -25,30 +25,30 @@ const Auth = () => {
     }
   }, [currentUser, navigate]);
 
-  // Debounced username availability check
   useEffect(() => {
     if (!username || username.length < 3) {
       setUsernameAvailable(null);
+      setError("");
       return;
     }
 
     const handler = setTimeout(async () => {
       setCheckingUsername(true);
       try {
-        // Make sure the username follows requirements
         if (!/^[a-zA-Z0-9_]+$/.test(username)) {
           setUsernameAvailable(false);
+          setError("Username can only contain letters, numbers, and underscores");
           setCheckingUsername(false);
           return;
         }
         
         const isAvailable = await checkUsernameAvailable(username);
         setUsernameAvailable(isAvailable);
+        setError(isAvailable ? "" : "Username already taken");
       } catch (error) {
         console.error("Error checking username availability:", error);
-        // If we get a permissions error, we'll assume it's available for now
-        // and handle validation during actual signup
         setUsernameAvailable(true);
+        setError("");
       } finally {
         setCheckingUsername(false);
       }
@@ -70,11 +70,6 @@ const Auth = () => {
       return;
     }
     
-    if (usernameAvailable === false) {
-      setError("This username is already taken. Please choose another.");
-      return;
-    }
-    
     setLoading(true);
     setError("");
     
@@ -82,16 +77,12 @@ const Auth = () => {
       await loginWithGoogle(username);
       navigate("/inbox");
     } catch (error: any) {
-      let message = "Failed to sign in";
+      let message = "Failed to sign in. Please try again.";
       
-      if (error.message && error.message.includes("already taken")) {
-        message = error.message;
-      } else if (error.message && error.message.includes("offline")) {
-        message = "Network error. Please check your internet connection.";
-      } else if (error.code === "auth/operation-not-allowed") {
-        message = "Google sign-in is not enabled in Firebase settings.";
-      } else if (error.code === "auth/popup-closed-by-user") {
+      if (error.code === "auth/popup-closed-by-user") {
         message = "Sign-in popup was closed. Please try again.";
+      } else if (error.code === "auth/popup-blocked") {
+        message = "Popup blocked. Please allow popups and try again.";
       }
       
       setError(message);
@@ -105,7 +96,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center px-4 pt-20 pb-10">
       <div className="card-glass max-w-md w-full animate-fade-in">
         <h2 className="text-2xl font-bold mb-6 text-center">
-          Create Your Visper Account
+          Create Your Eclipz Account
         </h2>
         
         {error && (
@@ -126,6 +117,7 @@ const Auth = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 className="glass pl-7"
                 required
+                minLength={3}
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
               
@@ -142,16 +134,16 @@ const Auth = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              This will be your unique Visper link: {window.location.origin}/@{username}
+              This will be your unique Eclipz link: {window.location.origin}/@{username}
             </p>
           </div>
           
           <Button 
             type="submit" 
-            disabled={loading || (username.length >= 3 && usernameAvailable === false)}
+            disabled={loading || !username || username.length < 3 || usernameAvailable === false}
             className="w-full bg-primary hover:bg-primary/80 flex items-center justify-center gap-2"
           >
-            {loading ? "Please wait..." : (
+            {loading ? "Creating account..." : (
               <>
                 <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
                   <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
@@ -168,7 +160,7 @@ const Auth = () => {
         </form>
         
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>By signing up, you get your unique Visper username and can receive anonymous messages instantly.</p>
+          <p>By signing up, you get your unique Eclipz username and can receive anonymous messages instantly.</p>
         </div>
       </div>
     </div>

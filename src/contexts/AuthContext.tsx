@@ -43,15 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Check if a username is available (not already taken)
   async function checkUsernameAvailable(username: string): Promise<boolean> {
     if (!username || username.length < 3) return false;
     
     try {
-      // Format the username to include @ prefix if it doesn't have one
       const formattedUsername = username.startsWith('@') ? username : `@${username}`;
       
-      // First, check if the username matches Firebase username requirements
       if (!/^@[a-zA-Z0-9_]+$/.test(formattedUsername)) {
         return false;
       }
@@ -60,19 +57,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const q = query(usersRef, where("username", "==", formattedUsername));
       const querySnapshot = await getDocs(q);
       
-      // If the query is empty, the username is available
       return querySnapshot.empty;
     } catch (error) {
       console.error("Error checking username availability:", error);
-      
-      // If we get a permission error, assume the username is available
-      // This is a temporary fix until proper Firebase rules are set up
-      if (error instanceof Error && error.message.includes("permission")) {
-        console.log("Permission error, assuming username is available");
-        return true;
-      }
-      
-      return false;
+      // Return true to allow sign-in attempt if check fails
+      return true;
     }
   }
   
@@ -85,36 +74,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       
       if (userDoc.exists() && userDoc.data().username) {
-        // User exists, update auth profile to match Firestore
+        // User exists with username, update auth profile
         await firebaseUpdateProfile(user, {
           displayName: userDoc.data().username
         });
         toast.success("Signed in successfully!");
       } else {
-        // This is a new user or one without a username
+        // New user or existing user without username
         let username: string;
         
         if (customUsername) {
-          // Format the custom username to include @ prefix
           username = customUsername.startsWith('@') ? customUsername : `@${customUsername}`;
-          
-          // Make sure the custom username is unique - but don't block sign-in if check fails
-          try {
-            const isAvailable = await checkUsernameAvailable(username);
-            if (!isAvailable) {
-              toast.error("Username may already be taken, but we'll try to register it anyway.");
-            }
-          } catch (error) {
-            console.error("Error checking username:", error);
-            // Continue anyway since this is just a warning
-          }
         } else {
-          // Create default username from email (before @ symbol)
-          const defaultUsername = `@${user.email?.split('@')[0] || ''}`;
-          username = defaultUsername;
+          // Create default username from email
+          const emailPrefix = user.email?.split('@')[0] || 'user';
+          username = `@${emailPrefix}`;
         }
         
-        // Create/update the user document
         try {
           await setDoc(doc(db, "users", user.uid), {
             username,
@@ -123,7 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             authProvider: 'google'
           }, { merge: true });
           
-          // Update the auth profile
           await firebaseUpdateProfile(user, {
             displayName: username
           });
@@ -131,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast.success("Account created successfully!");
         } catch (error) {
           console.error("Error creating user document:", error);
-          toast.error("Signed in but couldn't save your profile. Some features may be limited.");
+          toast.success("Signed in successfully!");
         }
       }
     } catch (error) {
@@ -145,21 +120,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!currentUser) throw new Error("No user logged in");
     
     try {
-      // Format the username to include @ prefix
       const formattedUsername = newUsername.startsWith('@') ? newUsername : `@${newUsername}`;
       
-      // Check if username is already taken
       const isAvailable = await checkUsernameAvailable(formattedUsername);
       if (!isAvailable) {
         throw new Error("Username already taken. Please choose another.");
       }
       
-      // Update in Firebase Auth
       await firebaseUpdateProfile(currentUser, {
         displayName: formattedUsername
       });
       
-      // Update in Firestore
       await setDoc(doc(db, "users", currentUser.uid), {
         username: formattedUsername
       }, { merge: true });

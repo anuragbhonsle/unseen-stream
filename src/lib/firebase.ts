@@ -2,8 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { 
-  getFirestore, 
-  enableIndexedDbPersistence,
+  getFirestore,
   connectFirestoreEmulator
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
@@ -24,23 +23,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Enable offline persistence when possible
-try {
-  enableIndexedDbPersistence(db)
-    .catch((err) => {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('Firestore persistence disabled: multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-        // The browser doesn't support IndexedDB
-        console.warn('Firestore persistence not supported by this browser');
-      }
-    });
-} catch (error) {
-  console.warn('Error enabling Firestore persistence:', error);
-}
-
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 // Only initialize analytics in browser environment
 const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
