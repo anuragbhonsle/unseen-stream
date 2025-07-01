@@ -1,5 +1,5 @@
 
-# Visper
+
 
 An anonymous messaging platform with a clean, modern UI built with:
 
